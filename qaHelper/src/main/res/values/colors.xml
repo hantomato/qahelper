@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <color name="qal_brand_lightest">#606C96</color>
+    <color name="qal_brand_light">#4D5987</color>
+    <color name="qal_brand_medium">#3A4678</color>
+    <color name="qal_brand_main">#27336A</color>
+    <color name="qal_brand_dark">#1F2954</color>
+
+    <color name="qal_gray_lightest">#F5F5F5</color>
+    <color name="qal_gray_light">#E0E0E0</color>
+    <color name="qal_gray_medium">#9E9E9E</color>
+    <color name="qal_gray_dark">#616161</color>
+    <color name="qal_gray_darkest">#212121</color>
+
+    <color name="qal_red_light">#F7CAC9</color>
+    <color name="qal_red_medium">#F75270</color>
+    <color name="qal_red_dark">#DC143C</color>
+
+    <color name="qal_floating">#A0DC143C</color>
+</resources>

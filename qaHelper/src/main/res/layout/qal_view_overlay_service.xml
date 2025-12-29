@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    tools:context="service.QaOverlayService">
+
+    <FrameLayout
+        android:id="@+id/layoutCollapsed"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        tools:layout_width="100dp">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="8dp">
+
+            <ImageView
+                android:id="@+id/ivExpanded"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="@drawable/qal_bg_floating_btn"
+                android:contentDescription="플로팅 메뉴 열기"
+                android:padding="8dp"
+                android:src="@drawable/qal_ic_outline_bug_report_24"
+                android:tint="@color/qal_floating"
+                android:visibility="visible" />
+
+            <ImageView
+                android:id="@+id/ivClose"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_marginStart="4dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/qal_bg_floating_gray_btn"
+                android:contentDescription="플로팅 메뉴 열기"
+                android:padding="6dp"
+                android:src="@drawable/qal_ic_outline_close_24"
+                android:tint="#333333"
+                android:visibility="visible" />
+        </LinearLayout>
+    </FrameLayout>
+
+    <LinearLayout
+        android:id="@+id/llExpanded"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="8dp"
+        android:visibility="gone"
+        tools:translationX="50dp"
+        tools:visibility="visible">
+
+        <ImageView
+            android:id="@+id/ivCollapse"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="@drawable/qal_bg_floating_btn"
+            android:contentDescription="메뉴 접기"
+            android:padding="8dp"
+            android:src="@drawable/qal_ic_outline_keyboard_arrow_up_24"
+            android:tint="@color/qal_floating" />
+
+        <FrameLayout
+            android:id="@+id/layoutScreenshot"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginTop="8dp">
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/qal_bg_floating_btn"
+                android:padding="8dp"
+                android:src="@drawable/qal_ic_outline_crop_free_24"
+                android:tint="@color/qal_floating" />
+
+            <TextView
+                android:id="@+id/tvScreenshotCount"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="top|end"
+                android:background="@android:drawable/presence_online"
+                android:gravity="center"
+                android:text="0"
+                android:textColor="@android:color/white"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+        </FrameLayout>
+
+        <!--        <FrameLayout-->
+        <!--            android:id="@+id/layoutRecord"-->
+        <!--            android:layout_width="36dp"-->
+        <!--            android:layout_height="36dp"-->
+        <!--            android:layout_marginTop="8dp">-->
+
+        <!--            <ImageView-->
+        <!--                android:id="@+id/ivScreenshot"-->
+        <!--                android:layout_width="match_parent"-->
+        <!--                android:layout_height="match_parent"-->
+        <!--                android:background="@drawable/circle_background"-->
+        <!--                android:padding="8dp"-->
+        <!--                android:src="@android:drawable/ic_menu_camera"-->
+        <!--                android:tint="#ff44a6" />-->
+        <!--        </FrameLayout>-->
+
+        <ImageView
+            android:id="@+id/ivUpload"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/qal_bg_floating_btn"
+            android:padding="8dp"
+            android:src="@drawable/qal_ic_outline_cloud_upload_24"
+            android:tint="@color/qal_floating" />
+
+    </LinearLayout>
+</FrameLayout>
