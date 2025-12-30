@@ -381,7 +381,7 @@ class MediaProjectionService : Service() {
         try {
             // 파일명 생성 (mp_screenshot_yyyyMMdd_HHmmss.png)
             val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-            val fileName = "mp_screenshot_$timestamp.png"
+            val fileName = "screenshot_$timestamp.png"
 
             // 스크린샷 디렉토리 가져오기
             val screenshotDir = FileMgr.getScreenshotDir(this)
