@@ -23,6 +23,7 @@ class MainApp : Application() {
 
         QaHelper.setPreShakeAction {
             android.util.Log.d("qahelper", "Shake detected! Preparing to start QA Helper...")
+            QaHelper.setAppInfo("myappinfo")
         }
 
     }

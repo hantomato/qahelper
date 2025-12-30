@@ -66,7 +66,7 @@ class QaHelper {
 
         }
 
-        private fun setAppInfo(appInfo: String) {
+        fun setAppInfo(appInfo: String) {
             this.appInfo = appInfo
             this.descPrefix = "== 디바이스 정보 ==\n" +
                     "• OS: ${Build.VERSION.RELEASE}\n" +
