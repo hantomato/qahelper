@@ -3,6 +3,7 @@ package com.md.qahelper
 import android.app.Application
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.provider.Settings
 import com.md.qahelper.act.OverlayPermissionActivity
 import com.md.qahelper.mgr.FileMgr
@@ -21,10 +22,7 @@ class QaHelper {
 
     companion object {
 
-        var appVersion: String = ""
-            private set
-
-        var environment: String = ""
+        var appInfo: String = ""
             private set
 
         var descPrefix: String = ""
@@ -41,16 +39,27 @@ class QaHelper {
          * - 앱공간/qa 폴더 초기화 (기존 파일 삭제)
          *
          */
-        fun init(ctx: Context, appVersion: String, environment: String, jiraBaseUrl: String, serverUrl: String, useShakeToStart: Boolean = true) {
-            MyLogger.log("QaHelper: Initializing qa helper (version: $appVersion, env: $environment, jira: $jiraBaseUrl, serverUrl: ${Companion.serverUrl})")
+        fun init(
+            ctx: Context,
+            appInfo: String,
+            jiraBaseUrl: String,
+            serverUrl: String,
+            useShakeToStart: Boolean = true
+        ) {
+            MyLogger.log("QaHelper: Initializing qa helper (appInfo: $appInfo, jiraBaseUrl: $jiraBaseUrl, serverUrl: $serverUrl, useShakeToStart: $useShakeToStart)")
 
             // 앱 버전 및 환경 정보 저장
-            this.appVersion = appVersion
-            this.environment = environment
+            this.appInfo = appInfo
             this.jiraBaseUrl = jiraBaseUrl.trimEnd('/')
             this.serverUrl = serverUrl
 
-            this.descPrefix = "버전: $appVersion\n환경: $environment\n\n"
+            this.descPrefix = "== 디바이스 정보 ==\n" +
+                    "• OS: ${Build.VERSION.RELEASE}\n" +
+                    "• 모델명: ${Build.MODEL}\n" +
+                    "\n" +
+                    "== 앱 정보 ==\n" +
+                    "$appInfo\n" +
+                    "\n"
 
             // 이전 QA 파일들 초기화 (삭제)
             FileMgr.init(ctx)

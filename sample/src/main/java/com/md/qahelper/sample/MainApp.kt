@@ -16,8 +16,7 @@ class MainApp : Application() {
 
         QaHelper.init(
             ctx = this,
-            appVersion = "1.2.3",
-            environment = "mydev",
+            appInfo = "환경: mydev",
             jiraBaseUrl = getString(R.string.sampleJiraBaseUrl),
             serverUrl = getString(R.string.sampleServerUrl)
         )

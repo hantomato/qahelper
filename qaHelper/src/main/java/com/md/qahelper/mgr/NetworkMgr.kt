@@ -113,11 +113,9 @@ object NetworkMgr {
         }
     }
 
-    // Helper 함수들은 그대로 유지
     private fun addTextField(writer: DataOutputStream, boundary: String, name: String, value: String) {
         writer.writeBytes("--$boundary$LINE_FEED")
         writer.writeBytes("Content-Disposition: form-data; name=\"$name\"$LINE_FEED")
-        writer.writeBytes("Content-Type: text/plain; charset=$CHARSET$LINE_FEED")
         writer.writeBytes(LINE_FEED)
         writer.write(value.toByteArray(Charsets.UTF_8))
         writer.writeBytes(LINE_FEED)
