@@ -26,6 +26,9 @@ internal object ShakeLifecycleMgr : Application.ActivityLifecycleCallbacks {
 
         // 흔들렸을 때 동작 정의
         shakeDetector = ShakeDetector {
+            // 사전 작업이 있다면 먼저 실행
+            QaHelper.preShakeAction?.invoke()
+            // QaHelper 시작
             QaHelper.start(application)
         }
 

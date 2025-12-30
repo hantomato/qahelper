@@ -21,5 +21,9 @@ class MainApp : Application() {
             serverUrl = getString(R.string.sampleServerUrl)
         )
 
+        QaHelper.setPreShakeAction {
+            android.util.Log.d("qahelper", "Shake detected! Preparing to start QA Helper...")
+        }
+
     }
 }
