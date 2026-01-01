@@ -59,7 +59,7 @@ class ScreenshotPreviewActivity : ComponentActivity() {
         }
 
         if (screenshots.isEmpty()) {
-            myStart<CreateJiraActivity>()
+            myStart<JiraActivity>()
             finish()
         }
     }
@@ -143,7 +143,7 @@ class ScreenshotPreviewActivity : ComponentActivity() {
             val file = screenshots[currentPosition]
 
             // Delete file
-            if (file.exists() && file.delete()) {
+            if (FileMgr.deleteScreenshotFile(this, file)) {
                 // Remove from adapter
                 adapter.removeItem(currentPosition)
 
@@ -211,7 +211,7 @@ class ScreenshotPreviewActivity : ComponentActivity() {
                 }
             }
 
-            myStart<CreateJiraActivity>()
+            myStart<JiraActivity>()
             finish()
 
         } catch (e: Exception) {

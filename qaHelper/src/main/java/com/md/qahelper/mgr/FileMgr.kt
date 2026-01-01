@@ -62,4 +62,43 @@ object FileMgr {
         }
     }
 
+    /**
+     * 모든 스크린샷 파일을 삭제한다
+     * @return 삭제된 파일 개수
+     */
+    fun deleteAllScreenshots(ctx: Context): Int {
+        val screenshotDir = getScreenshotDir(ctx)
+        val files = screenshotDir.listFiles() ?: return 0
+
+        var deletedCount = 0
+        files.forEach { file ->
+            if (file.exists() && file.delete()) {
+                deletedCount++
+                MyLogger.log("FileMgr: Deleted screenshot: ${file.name}")
+            }
+        }
+
+        MyLogger.log("FileMgr: Deleted $deletedCount screenshot(s)")
+        return deletedCount
+    }
+
+    /**
+     * 개별 스크린샷 파일을 삭제한다
+     * @return 삭제 성공 여부
+     */
+    fun deleteScreenshotFile(ctx: Context, file: File): Boolean {
+        if (!file.exists()) {
+            MyLogger.log("FileMgr: File does not exist: ${file.name}")
+            return false
+        }
+
+        val result = file.delete()
+        if (result) {
+            MyLogger.log("FileMgr: Deleted screenshot: ${file.name}")
+        } else {
+            MyLogger.loge("FileMgr: Failed to delete: ${file.name}")
+        }
+        return result
+    }
+
 }

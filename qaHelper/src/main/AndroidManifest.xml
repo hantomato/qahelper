@@ -15,7 +15,7 @@
             android:name=".act.ScreenshotPreviewActivity"
             android:theme="@style/QalMyTheme" />
         <activity
-            android:name=".act.CreateJiraActivity"
+            android:name=".act.JiraActivity"
             android:theme="@style/QalMyTheme" />
         <activity
             android:name=".act.MediaProjectionPermissionActivity"

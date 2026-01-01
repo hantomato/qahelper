@@ -18,4 +18,6 @@
     <color name="qal_red_dark">#DC143C</color>
 
     <color name="qal_floating">#A0DC143C</color>
+    <color name="qal_yellow">#FFE52A</color>
+    <color name="qal_yellow_disable">#D1C9A1</color>
 </resources>

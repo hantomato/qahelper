@@ -1,14 +1,16 @@
-package com.md.qahelper.act
+package com.md.qahelper.fragment
 
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
-import androidx.activity.ComponentActivity
+import android.view.ViewGroup
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.md.qahelper.QaHelper
-import com.md.qahelper.databinding.QalActivityCreateJiraBinding
-import com.md.qahelper.dto.ServerResponse
+import com.md.qahelper.databinding.QalFragmentCreateJiraBinding
+import com.md.qahelper.dto.ServerResp
 import com.md.qahelper.mgr.FileMgr
 import com.md.qahelper.mgr.NetworkMgr
 import com.md.qahelper.util.ShowToast
@@ -19,57 +21,60 @@ import kotlinx.coroutines.withContext
 import java.io.File
 
 /**
+ * 지라 티켓 생성 Fragment
  *
- * Created on 2025. 12. 23.
+ * Created on 2026. 01. 01.
  */
-class CreateJiraActivity : ComponentActivity() {
+class CreateJiraFragment : Fragment() {
+
+    private var _binding: QalFragmentCreateJiraBinding? = null
+    private val binding get() = _binding!!
 
     private val screenshots = mutableListOf<File>()
-    private var jiraKey: String? = null
-    private val binding by lazy { QalActivityCreateJiraBinding.inflate(layoutInflater) }
+    private var issueKey: String? = null
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(binding.root)
-        Utils.applyWindowInsetsPadding(binding.root)
-        Utils.setSystemBarsBlack(this)
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        _binding = QalFragmentCreateJiraBinding.inflate(inflater, container, false)
+        return binding.root
+    }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
         loadScreenshots()
         setListeners()
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+
     private fun loadScreenshots() {
-        val files = FileMgr.getScreenshotDir(this).listFiles()
+        val files = FileMgr.getScreenshotDir(requireContext()).listFiles()
         screenshots.clear()
 
         if (files != null && files.isNotEmpty()) {
-            val sortedFiles = files.sortedBy { it.lastModified() }  // 가장 먼저 생성된게 먼저 표시되도록
+            val sortedFiles = files.sortedBy { it.lastModified() }
             screenshots.addAll(sortedFiles)
         }
     }
 
     private fun setListeners() {
-        binding.ivUpload.setOnClickListener {
-
-            Utils.hideKeyboard(this)
+        binding.layoutUpload.setOnClickListener {
+            Utils.hideKeyboard(requireActivity())
             createJiraTicket()
         }
-
-        binding.ivClose.setOnClickListener {
-            finish()
-        }
-
-        // 나중에 작업 예정
-//        binding.btnOpen.setOnClickListener {
-//            openJiraTicket()
-//        }
     }
 
     private fun createJiraTicket() {
         // 제목 유효성 검사
         val title = binding.editTitle.text.toString().trim()
         if (title.isEmpty()) {
-            ShowToast(this, "제목을 입력해주세요")
+            ShowToast(requireContext(), "제목을 입력해주세요")
             binding.editTitle.requestFocus()
             return
         }
@@ -80,11 +85,11 @@ class CreateJiraActivity : ComponentActivity() {
         lifecycleScope.launch {
             try {
                 showLoading(true)
-                binding.ivUpload.isEnabled = false
+                binding.layoutUpload.isEnabled = false
 
                 val response = withContext(Dispatchers.IO) {
                     NetworkMgr.postUpload(
-                        targetUrl = QaHelper.serverUrl,
+                        targetUrl = QaHelper.createUrl,
                         title = title,
                         desc = desc,
                         files = screenshots
@@ -94,7 +99,7 @@ class CreateJiraActivity : ComponentActivity() {
                 showLoading(false)
 
                 if (response != null) {
-                    jiraKey = response.jiraKey
+                    issueKey = response.issueKey
                     displaySuccess(response)
 
                     // Delete uploaded files
@@ -108,16 +113,16 @@ class CreateJiraActivity : ComponentActivity() {
                 displayError("오류 발생: ${e.message}")
                 e.printStackTrace()
             } finally {
-                binding.ivUpload.isEnabled = true
+                binding.layoutUpload.isEnabled = true
             }
         }
     }
 
-    private fun displaySuccess(response: ServerResponse) {
-        val url = "${QaHelper.jiraBaseUrl}/browse/${response.jiraKey}"
+    private fun displaySuccess(response: ServerResp) {
+        val url = "${QaHelper.jiraBaseUrl}/browse/${response.issueKey}"
         val resultText = buildString {
             appendLine("=== Jira 티켓 생성 완료 ===\n")
-            response.jiraKey?.let { appendLine("Jira Key: $it") }
+            response.issueKey?.let { appendLine("Issue Key: $it") }
             response.totalUploadRequest?.let { appendLine("Total upload file request: $it") }
             response.uploadedCount?.let { appendLine("Uploaded file count: $it") }
             response.uploadStatus?.let { appendLine("Upload status: $it") }
@@ -125,17 +130,12 @@ class CreateJiraActivity : ComponentActivity() {
         }
 
         binding.tvResult.text = resultText
-
-        // Enable open button if jiraKey is available
-//        binding.btnOpen.isEnabled = !response.jiraKey.isNullOrEmpty()
-
-        ShowToast(this, "Jira 티켓이 생성되었습니다")
+        ShowToast(requireContext(), "Jira 티켓이 생성되었습니다")
     }
 
     private fun displayError(errorMessage: String) {
         binding.tvResult.text = "=== 오류 발생 ===\n\n$errorMessage"
-//        binding.btnOpen.isEnabled = false
-        ShowToast(this, "티켓 생성 실패")
+        ShowToast(requireContext(), "티켓 생성 실패")
     }
 
     private fun showLoading(show: Boolean) {
@@ -143,29 +143,8 @@ class CreateJiraActivity : ComponentActivity() {
         binding.tvResult.text = if (show) "Jira 티켓 생성 중..." else binding.tvResult.text
     }
 
-    private fun openJiraTicket() {
-        val key = jiraKey
-        if (key.isNullOrEmpty()) {
-            ShowToast(this, "Jira 키가 없습니다")
-            return
-        }
-
-        try {
-            val url = "${QaHelper.jiraBaseUrl}/browse/$key"
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-            startActivity(intent)
-        } catch (e: Exception) {
-            ShowToast(this, "브라우저를 열 수 없습니다: ${e.message}")
-            e.printStackTrace()
-        }
-    }
-
     private fun deleteUploadedFiles() {
-        screenshots.forEach { file ->
-            if (file.exists()) {
-                file.delete()
-            }
-        }
+        FileMgr.deleteAllScreenshots(requireContext())
         screenshots.clear()
     }
 }

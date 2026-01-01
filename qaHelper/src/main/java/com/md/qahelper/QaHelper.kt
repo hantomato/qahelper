@@ -31,7 +31,16 @@ class QaHelper {
         var jiraBaseUrl: String = ""
             private set
 
-        var serverUrl: String = ""
+        var projectKey: String = ""
+            private set
+
+        var createUrl: String = ""
+            private set
+
+        var getUrl: String = ""
+            private set
+
+        var attachUrl: String = ""
             private set
 
         var preShakeAction: (() -> Unit)? = null
@@ -46,14 +55,20 @@ class QaHelper {
             ctx: Context,
             appInfo: String,
             jiraBaseUrl: String,
-            serverUrl: String,
+            projectKey: String,
+            createUrl: String,
+            getUrl: String,
+            attachUrl: String,
             useShakeToStart: Boolean = true
         ) {
-            MyLogger.log("QaHelper: Initializing qa helper (appInfo: $appInfo, jiraBaseUrl: $jiraBaseUrl, serverUrl: $serverUrl, useShakeToStart: $useShakeToStart)")
+            MyLogger.log("QaHelper: Initializing qa helper (appInfo: $appInfo, jiraBaseUrl: $jiraBaseUrl, projectKey: $projectKey, createUrl: $createUrl, getUrl: $getUrl, attachUrl: $attachUrl, useShakeToStart: $useShakeToStart)")
 
             // 앱 버전 및 환경 정보 저장
             this.jiraBaseUrl = jiraBaseUrl.trimEnd('/')
-            this.serverUrl = serverUrl
+            this.projectKey = projectKey
+            this.createUrl = createUrl
+            this.getUrl = getUrl
+            this.attachUrl = attachUrl
             setAppInfo(appInfo)
 
             FileMgr.init(ctx)

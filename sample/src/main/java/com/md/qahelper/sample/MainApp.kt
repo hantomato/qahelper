@@ -18,7 +18,10 @@ class MainApp : Application() {
             ctx = this,
             appInfo = "환경: mydev",
             jiraBaseUrl = getString(R.string.sampleJiraBaseUrl),
-            serverUrl = getString(R.string.sampleServerUrl)
+            projectKey = getString(R.string.sampleProjectKey),
+            createUrl = getString(R.string.sampleCreateUrl),
+            getUrl = getString(R.string.sampleGetUrl),
+            attachUrl = getString(R.string.sampleAttachUrl),
         )
 
         QaHelper.setPreShakeAction {

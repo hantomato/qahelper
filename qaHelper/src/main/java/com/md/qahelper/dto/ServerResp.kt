@@ -5,8 +5,8 @@ package com.md.qahelper.dto
  *
  * Created on 2025. 12. 22.
  */
-data class ServerResponse(
-    val jiraKey: String?,    // 지라 티켓 번호 (예: "QA-3843")
+data class ServerResp(
+    val issueKey: String?,    // 지라 티켓 번호 (예: "QA-3843")
     val totalUploadRequest: Int?,
     val uploadedCount: Int?,
     val uploadStatus: String?    // 응답 메시지
