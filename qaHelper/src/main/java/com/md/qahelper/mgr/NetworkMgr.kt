@@ -62,12 +62,14 @@ object NetworkMgr {
 
     suspend fun postUpload(
         targetUrl: String,
+        projectKey: String,
         title: String,
         desc: String,
         files: List<File>
     ): ServerResp? = withContext(Dispatchers.IO) {
 
         MyLogger.log("MyLogger started - URL: $targetUrl")
+        MyLogger.log("MyLogger Parameters - projectKey: $projectKey")
         MyLogger.log("MyLogger Parameters - title: $title")
         MyLogger.log("MyLogger Parameters - desc: $desc")
         MyLogger.log("MyLogger Files count: ${files.size}")
@@ -97,6 +99,7 @@ object NetworkMgr {
 
         try {
             DataOutputStream(connection.outputStream).use { outputStream ->
+                addTextField(outputStream, boundary, "projectKey", projectKey)
                 addTextField(outputStream, boundary, "title", title)
                 addTextField(outputStream, boundary, "desc", desc)
 

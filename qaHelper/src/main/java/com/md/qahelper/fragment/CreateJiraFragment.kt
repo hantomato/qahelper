@@ -90,6 +90,7 @@ class CreateJiraFragment : Fragment() {
                 val response = withContext(Dispatchers.IO) {
                     NetworkMgr.postUpload(
                         targetUrl = QaHelper.createUrl,
+                        projectKey = QaHelper.projectKey,
                         title = title,
                         desc = desc,
                         files = screenshots

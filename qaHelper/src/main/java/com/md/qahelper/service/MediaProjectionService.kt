@@ -1,12 +1,14 @@
 package com.md.qahelper.service
 
-import android.R
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.Service
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.ServiceInfo
 import android.graphics.Bitmap
 import android.graphics.PixelFormat
@@ -22,6 +24,7 @@ import android.os.IBinder
 import android.os.Looper
 import android.util.DisplayMetrics
 import android.view.WindowManager
+import com.md.qahelper.R
 import com.md.qahelper.mgr.FileMgr
 import com.md.qahelper.util.MyLogger
 import com.md.qahelper.util.ShowToast
@@ -97,20 +100,30 @@ class MediaProjectionService : Service() {
     private var screenWidth = 0
     private var screenHeight = 0
     private var screenDensity = 0
+    private var isCapturing = false  // 캡처 진행 중 플래그
 
-    // 캡처 요청 플래그 (OnImageAvailableListener에서 사용)
-    private var captureRequested = false
+    // 종료 버튼 BroadcastReceiver
+    private val stopReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            MyLogger.log("MediaProjectionService: stopReceiver.onReceive called, action=${intent?.action}")
+            if (intent?.action == ACTION_STOP_PROJECTION) {
+                MyLogger.log("MediaProjectionService: Stopping service via notification action")
+                stopSelf()
+            }
+        }
+    }
 
     companion object {
         private const val NOTIFICATION_CHANNEL_ID = "media_projection_service"
         private const val NOTIFICATION_ID = 1001
         private const val EXTRA_RESULT_CODE = "result_code"
         private const val EXTRA_DATA = "data"
+        private const val ACTION_STOP_PROJECTION = "com.md.qahelper.ACTION_STOP_PROJECTION"
 
         private var instance: MediaProjectionService? = null
         private var isServiceRunning = false
 
-        fun start(context: Context, resultCode: Int, data: Intent, autoCapture: Boolean = false) {
+        fun start(context: Context, resultCode: Int, data: Intent) {
             val intent = Intent(context, MediaProjectionService::class.java).apply {
                 putExtra(EXTRA_RESULT_CODE, resultCode)
                 putExtra(EXTRA_DATA, data)
@@ -163,6 +176,12 @@ class MediaProjectionService : Service() {
         super.onDestroy()
         MyLogger.log("MediaProjectionService: onDestroy")
 
+        try {
+            unregisterReceiver(stopReceiver)
+        } catch (e: Exception) {
+            // 이미 해제된 경우 무시
+        }
+
         cleanupMediaProjection()
 
         instance = null
@@ -174,6 +193,14 @@ class MediaProjectionService : Service() {
         MyLogger.log("MediaProjectionService: onCreate")
         instance = this
         isServiceRunning = true
+
+        // BroadcastReceiver 등록
+        val filter = IntentFilter(ACTION_STOP_PROJECTION)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(stopReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            registerReceiver(stopReceiver, filter)
+        }
 
         // Foreground notification 설정
         createNotificationChannel()
@@ -207,6 +234,17 @@ class MediaProjectionService : Service() {
     }
 
     private fun createNotification(): Notification {
+        // 종료 버튼 PendingIntent - 명시적 Intent로 생성
+        val stopIntent = Intent(ACTION_STOP_PROJECTION).apply {
+            setPackage(packageName)  // 명시적 Intent로 만들기
+        }
+        val stopPendingIntent = PendingIntent.getBroadcast(
+            this,
+            0,
+            stopIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Notification.Builder(this, NOTIFICATION_CHANNEL_ID)
         } else {
@@ -215,9 +253,16 @@ class MediaProjectionService : Service() {
         }
 
         return builder
-            .setContentTitle("MediaProjection 스크린샷")
-            .setContentText("스크린샷 캡처 준비 완료")
-            .setSmallIcon(R.drawable.ic_menu_camera)
+            .setContentTitle("QA 스크린샷")
+            .setContentText("캡처 준비 완료")
+            .setSmallIcon(R.drawable.qal_ic_outline_bug_report_24)
+            .addAction(
+                Notification.Action.Builder(
+                    R.drawable.qal_ic_outline_close_24,
+                    "종료",
+                    stopPendingIntent
+                ).build()
+            )
             .build()
     }
 
@@ -261,54 +306,25 @@ class MediaProjectionService : Service() {
                 }
             }, mainHandler)
 
-            // ImageReader 설정
+            // ImageReader 설정 (단발성 캡처이므로 maxImages=1로 메모리 절약)
             imageReader = ImageReader.newInstance(
                 screenWidth,
                 screenHeight,
                 PixelFormat.RGBA_8888,
-                2
+                1  // 단발성 스크린샷이므로 1로 충분
             )
 
-            // OnImageAvailableListener 등록 - 이미지가 준비되면 즉시 호출됨
-            imageReader?.setOnImageAvailableListener({ reader ->
-                if (captureRequested) {
-                    captureRequested = false
-
-                    try {
-                        val image = reader.acquireLatestImage()
-                        if (image != null) {
-                            MyLogger.log("MediaProjectionService: Image available, capturing now")
-                            val bitmap = imageToBitmap(image)
-                            image.close()
-
-                            saveScreenshot(bitmap)
-
-                            ShowToast(this, "MediaProjection 스크린샷이 저장되었습니다")
-                            MyLogger.log("MediaProjectionService: Screenshot captured successfully")
-                        } else {
-                            MyLogger.log("MediaProjectionService: Failed to acquire image")
-                            mainHandler.post {
-                                ShowToast(this, "스크린샷 캡처 실패")
-                            }
-                        }
-                    } catch (e: Exception) {
-                        MyLogger.log("MediaProjectionService: Error capturing screenshot - ${e.message}")
-                        ShowToast(this, "스크린샷 캡처 실패: ${e.message}")
-                    }
-                }
-            }, mainHandler)
-
+            // VirtualDisplay 생성 (Android 14+에서는 같은 MediaProjection으로 여러 번 생성 불가하므로 계속 유지)
             virtualDisplay = mediaProjection?.createVirtualDisplay(
-                "MediaProjectionScreenCapture",       // 1. 이름 (아무거나 상관없음)
-                screenWidth,                          // 2. 너비
-                screenHeight,                         // 3. 높이
-                screenDensity,                        // 4. 밀도 (DPI)
-                DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR, // 5. ★ 핵심 플래그
-                imageReader?.surface,                 // 6. ★ 핵심 타겟 (어디에 그릴 것인가)
-                null,                                 // 7. 콜백 (멈춤/재개 감지용, 안 쓰면 null)
-                mainHandler                           // 8. 핸들러 (콜백 실행 스레드)
+                "MediaProjectionScreenCapture",
+                screenWidth,
+                screenHeight,
+                screenDensity,
+                DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
+                imageReader?.surface,
+                null,
+                mainHandler
             )
-
 
             MyLogger.log("MediaProjectionService: MediaProjection setup completed")
 
@@ -322,41 +338,39 @@ class MediaProjectionService : Service() {
     fun captureScreen(context: Context) {
         MyLogger.log("MediaProjectionService: Capture screen requested")
 
-        if (mediaProjection == null || imageReader == null) {
+        if (mediaProjection == null || imageReader == null || virtualDisplay == null) {
             MyLogger.log("MediaProjectionService: MediaProjection not ready")
             ShowToast(this, "MediaProjection이 준비되지 않았습니다")
             return
         }
 
-        // 캡처 요청 플래그 설정
-        captureRequested = true
+        if (isCapturing) {
+            MyLogger.log("MediaProjectionService: Capture already in progress, skipping")
+            return
+        }
 
-        // 현재 사용 가능한 이미지를 즉시 시도
-        mainHandler.post {
-            if (captureRequested) {
-                captureRequested = false
+        isCapturing = true
 
-                try {
-                    val image = imageReader?.acquireLatestImage()
-                    if (image != null) {
-                        MyLogger.log("MediaProjectionService: Image available, capturing now")
-                        val bitmap = imageToBitmap(image)
-                        image.close()
+        try {
+            val image = imageReader?.acquireLatestImage()
+            if (image != null) {
+                MyLogger.log("MediaProjectionService: Image available, capturing now")
+                val bitmap = imageToBitmap(image)
+                image.close()
 
-                        saveScreenshot(bitmap)
+                saveScreenshot(bitmap)
 
-                        ShowToast(this, "MediaProjection 스크린샷이 저장되었습니다")
-                        MyLogger.log("MediaProjectionService: Screenshot captured successfully")
-                    } else {
-                        MyLogger.log("MediaProjectionService: No image available yet, waiting for listener")
-                        captureRequested = true // 다시 true로 설정하여 리스너에서 재시도
-                    }
-                } catch (e: Exception) {
-                    MyLogger.log("MediaProjectionService: Error capturing screenshot - ${e.message}")
-                    ShowToast(this, "스크린샷 캡처 실패: ${e.message}")
-                    captureRequested = false
-                }
+                ShowToast(this, "MediaProjection 스크린샷이 저장되었습니다")
+                MyLogger.log("MediaProjectionService: Screenshot captured successfully")
+            } else {
+                MyLogger.log("MediaProjectionService: No image available yet")
+                ShowToast(this, "스크린샷 캡처 실패: 이미지 없음")
             }
+        } catch (e: Exception) {
+            MyLogger.log("MediaProjectionService: Error capturing screenshot - ${e.message}")
+            ShowToast(this, "스크린샷 캡처 실패: ${e.message}")
+        } finally {
+            isCapturing = false
         }
     }
 
@@ -367,29 +381,36 @@ class MediaProjectionService : Service() {
         val rowStride = planes[0].rowStride
         val rowPadding = rowStride - pixelStride * screenWidth
 
-        val bitmap = Bitmap.createBitmap(
+        // rowPadding을 포함한 전체 비트맵 생성
+        val bitmapFull = Bitmap.createBitmap(
             screenWidth + rowPadding / pixelStride,
             screenHeight,
             Bitmap.Config.ARGB_8888
         )
-        bitmap.copyPixelsFromBuffer(buffer)
+        bitmapFull.copyPixelsFromBuffer(buffer)
+
+        // 실제 화면 크기로 크롭 (오른쪽 검은색 여백 제거)
+        val bitmap = Bitmap.createBitmap(bitmapFull, 0, 0, screenWidth, screenHeight)
+
+        // 원본 비트맵 메모리 해제
+        bitmapFull.recycle()
 
         return bitmap
     }
 
     private fun saveScreenshot(bitmap: Bitmap) {
         try {
-            // 파일명 생성 (mp_screenshot_yyyyMMdd_HHmmss.png)
+            // 파일명 생성 (screenshot_yyyyMMdd_HHmmss.jpg)
             val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-            val fileName = "screenshot_$timestamp.png"
+            val fileName = "screenshot_$timestamp.jpg"
 
             // 스크린샷 디렉토리 가져오기
             val screenshotDir = FileMgr.getScreenshotDir(this)
             val file = File(screenshotDir, fileName)
 
-            // Bitmap을 파일로 저장
+            // Bitmap을 JPEG 파일로 저장 (품질 85, 파일 크기 대폭 감소)
             FileOutputStream(file).use { out ->
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 85, out)
             }
 
             MyLogger.log("MediaProjectionService: Screenshot saved to ${file.absolutePath}")

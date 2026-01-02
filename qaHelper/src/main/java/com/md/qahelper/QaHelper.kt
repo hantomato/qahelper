@@ -22,6 +22,8 @@ class QaHelper {
 
     companion object {
 
+        private var deviceInfo: String = ""
+
         var appInfo: String = ""
             private set
 
@@ -63,6 +65,17 @@ class QaHelper {
         ) {
             MyLogger.log("QaHelper: Initializing qa helper (appInfo: $appInfo, jiraBaseUrl: $jiraBaseUrl, projectKey: $projectKey, createUrl: $createUrl, getUrl: $getUrl, attachUrl: $attachUrl, useShakeToStart: $useShakeToStart)")
 
+            // 디바이스 정보 생성 (한 번만)
+            val displayMetrics = ctx.resources.displayMetrics
+            val resolution = "${displayMetrics.widthPixels} x ${displayMetrics.heightPixels}"
+            val density = "${displayMetrics.densityDpi} dpi (${displayMetrics.density}x)"
+
+            deviceInfo = "== 디바이스 정보 ==\n" +
+                    "• OS: ${Build.VERSION.RELEASE}\n" +
+                    "• 모델명: ${Build.MODEL}\n" +
+                    "• 해상도: $resolution\n" +
+                    "• 화면밀도: $density"
+
             // 앱 버전 및 환경 정보 저장
             this.jiraBaseUrl = jiraBaseUrl.trimEnd('/')
             this.projectKey = projectKey
@@ -83,10 +96,7 @@ class QaHelper {
 
         fun setAppInfo(appInfo: String) {
             this.appInfo = appInfo
-            this.descPrefix = "== 디바이스 정보 ==\n" +
-                    "• OS: ${Build.VERSION.RELEASE}\n" +
-                    "• 모델명: ${Build.MODEL}\n" +
-                    "\n" +
+            this.descPrefix = "$deviceInfo\n\n" +
                     "== 앱 정보 ==\n" +
                     "$appInfo\n" +
                     "\n"

@@ -278,7 +278,6 @@ class QaOverlayService : Service() {
             } else {
                 // 실행 중이 아니면 권한 요청 Activity 시작
                 MyLogger.log("QaOverlayService: Starting MediaProjectionPermissionActivity")
-                ShowToast(this, "MediaProjection 권한을 요청합니다")
                 myStart<MediaProjectionPermissionActivity>() {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
